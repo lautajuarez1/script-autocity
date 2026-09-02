@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Autocity Marketplace Publisher",
+  "version": "3.4",
+  "description": "Autocompleta vehiculos y fotos desde AppSheet en Facebook Marketplace",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.facebook.com/*",
+    "*://*.asofix.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.facebook.com/marketplace/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

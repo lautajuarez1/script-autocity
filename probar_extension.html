@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lanzador de Pruebas - Autocity Marketplace Publisher</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #09090b;
+      color: #f4f4f5;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      max-width: 620px;
+      width: 100%;
+      background: #18181b;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    h1 {
+      font-size: 20px;
+      margin-top: 0;
+      color: #38bdf8;
+      font-weight: 700;
+    }
+    .badge {
+      background: #0284c7;
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      display: inline-block;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+    .card-auto {
+      background: #27272a;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      border-left: 3px solid #38bdf8;
+    }
+    .btn-test {
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      display: block;
+      text-align: center;
+      transition: background 0.15s;
+    }
+    .btn-test:hover {
+      background: #1d4ed8;
+    }
+    .steps {
+      margin-top: 20px;
+      background: #121215;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #a1a1aa;
+    }
+    .steps ol {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .warning-box {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fde68a;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <span class="badge">ENTORNO DE PRUEBA (MOCK)</span>
+  <h1>Lanzador de Pruebas: Autocity Marketplace Publisher</h1>
+  
+  <p style="font-size:13.5px; color:#a1a1aa; margin-top: 6px;">
+    Simula el llamado que realizará AppSheet. Envía los datos reales del vehículo a través del hash de la URL sin almacenar archivos locales.
+  </p>
+
+  <div class="card-auto">
+    <div style="font-weight:700; font-size:15px; color:#fff;">Jeep 300 C 2013 3.6 V6 L13 Automatico</div>
+    <div style="font-size:12.5px; color:#d4d4d8; margin-top:6px; line-height: 1.5;">
+      • Precio: USD 35.900<br>
+      • Kilómetros: 37.500 km<br>
+      • Sucursal: Córdoba<br>
+      • Carrocería: Sedán<br>
+      • Galería CDN: 10 imágenes
+    </div>
+  </div>
+
+  <a id="link-test" href="#" target="_blank" class="btn-test">
+    Abrir Facebook Marketplace con datos de prueba
+  </a>
+
+  <div class="warning-box">
+    <b>Aviso:</b> La extensión completará el formulario y cargará las fotos para revisar la vista previa. No presione el botón "Publicar" en Facebook para mantener la prueba en modo simulación.
+  </div>
+
+  <div class="steps">
+    <b>Instrucciones:</b>
+    <ol>
+      <li>En <code>chrome://extensions</code>, haga clic en el botón de recargar de la extensión para aplicar la versión 3.4.</li>
+      <li>Haga clic en el botón azul superior para abrir Marketplace.</li>
+      <li>En la tarjeta flotante inferior derecha, presione <i>"Autocompletar Formulario"</i>.</li>
+      <li>Verifique la carga progresiva de las 10 fotos y los valores asignados.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+  const testCar = {
+    id: "39598",
+    marca: "Jeep",
+    modelo: "300 C",
+    año: "2013",
+    km: "37500",
+    precio: "35900",
+    combustible: "Nafta",
+    transmision: "Automático",
+    carroceria_marketplace: "Sedán",
+    color: "Gris",
+    ubicacion: "Córdoba, Córdoba",
+    titulo: "Jeep 300 C 2013 3.6 V6 L13 Automatico",
+    descripcion: "Jeep 300 C 3.6 V6 L13, año 2013, con solo 37.500 km. Caja automático, nafta. Unidad de agencia y en excelente estado.\nEl precio es de USD 35.900.\nRecibimos vehículos con sistema llave por llave\nFinanciamos hasta el 100% a través de bancos\nCrédito propio de $12.000.000 en 12 cuotas fijas sin interés\n+400 autos en stock. Consultá por nuestro catálogo\nAutocity — Córdoba\nEscribinos por WhatsApp al 351 XXXXXXX y te pasamos toda la info: gastos de retiro, financiación y coordinamos tu visita o prueba de manejo.",
+    fotos: [
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113753482.IMG_1244.jpg",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113754123.IMG_1208.JPG",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113754234.IMG_1205.JPG",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113754384.IMG_1212.JPG",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113754584.IMG_1214.JPG",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113755050.IMG_1204.JPG",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113755642.IMG_1215.jpg",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113756273.IMG_1207.JPG",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113756647.IMG_1206.JPG",
+      "https://cdn.asofix.com/companies/13d2ec10-5ef5-11ea-8eed-536328ae2266/products/th-1701113756919.IMG_1218.JPG"
+    ]
+  };
+
+  const payload = encodeURIComponent(JSON.stringify(testCar));
+  const fbUrl = "https://www.facebook.com/marketplace/create/vehicle#autocity=" + payload;
+  document.getElementById('link-test').href = fbUrl;
+</script>
+
+</body>
+</html>

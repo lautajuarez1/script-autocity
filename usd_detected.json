@@ -1,0 +1,62 @@
+[
+  {
+    "id": 93387,
+    "marca": "Byd",
+    "modelo": "Song Pro",
+    "version": "Gs",
+    "precio_ars_api": 54812000,
+    "precio_usd_real": 35500,
+    "texto_html": "Precio USD 35.500",
+    "url": "https://autocity.com.ar/catalogo/usados/m-byd/m-song-pro/gs-5/"
+  },
+  {
+    "id": 93167,
+    "marca": "Ram",
+    "modelo": "1500",
+    "version": "5.7 dc 4×4 laramie night edition",
+    "precio_ars_api": 95573599,
+    "precio_usd_real": 61900,
+    "texto_html": "Precio USD 61.900",
+    "url": "https://autocity.com.ar/catalogo/usados/m-ram/m-1500/5-7-dc-4x4-laramie-night-edition/"
+  },
+  {
+    "id": 86175,
+    "marca": "Nissan",
+    "modelo": "Murano",
+    "version": "3.5 exclusive cvt",
+    "precio_ars_api": 38445599,
+    "precio_usd_real": 24900,
+    "texto_html": "Precio USD 24.900",
+    "url": "https://autocity.com.ar/catalogo/usados/m-nissan/m-murano/3-5-exclusive-cvt/"
+  },
+  {
+    "id": 85190,
+    "marca": "Jeep",
+    "modelo": "Grand Cherokee",
+    "version": "Overland atx",
+    "precio_ars_api": 46165600,
+    "precio_usd_real": 29900,
+    "texto_html": "Precio USD 29.900",
+    "url": "https://autocity.com.ar/catalogo/usados/m-jeep/m-grand-cherokee/overland-atx/"
+  },
+  {
+    "id": 77638,
+    "marca": "Alfa Romeo",
+    "modelo": "166",
+    "version": "3.0 v6 24v l99",
+    "precio_ars_api": 35512000,
+    "precio_usd_real": 23000,
+    "texto_html": "Precio USD 23.000",
+    "url": "https://autocity.com.ar/catalogo/usados/m-alfa-romeo/m-166/3-0-v6-24v-l99/"
+  },
+  {
+    "id": 39598,
+    "marca": "Jeep",
+    "modelo": "300 C",
+    "version": "3.6 v6 l13",
+    "precio_ars_api": 55429600,
+    "precio_usd_real": 35900,
+    "texto_html": "Precio USD 35.900",
+    "url": "https://autocity.com.ar/catalogo/usados/m-jeep/m-300-c/3-6-v6-l13/"
+  }
+]

@@ -1,0 +1,53 @@
+INSTRUCCIONES DE INSTALACION - Autocity Publisher v3.4
+======================================================
+
+PROBLEMA DIAGNOSTICADO:
+  El CDN de Autocity (cdn.asofix.com) NO envia cabecera Access-Control-Allow-Origin.
+  Esto bloquea cualquier fetch() desde un script en facebook.com (CORS).
+  La solucion es descargar las imagenes en el Service Worker de la extension,
+  que NO tiene restriccion CORS, y pasar los datos al content script como base64.
+
+  Ademas, los campos de Año (combobox desplegable) y Kilómetros ("kilometr" con acento)
+  fueron corregidos en la v2.1 para soportar seleccion automatica de desplegables y
+  normalizacion de acentos NFD.
+
+------------------------------------------------------
+PASO 1: RECARGAR LA EXTENSION
+------------------------------------------------------
+  1. Abrir chrome://extensions
+  2. En la tarjeta "Autocity Marketplace Publisher", hacer clic en el boton de recarga circular.
+     (O hacer "Quitar" y "Cargar descomprimida" si no actualiza el numero de version).
+  3. Verificar que diga Version: 3.4.
+  4. CERRAR las pestañas anteriores de Facebook.
+
+------------------------------------------------------
+PASO 2: PROBAR
+------------------------------------------------------
+  1. Abrir el archivo probar_extension.html:
+     C:\Users\admin\Desktop\script autocity\probar_extension.html
+  2. Hacer clic en "Abrir Facebook Marketplace con datos de prueba".
+  3. En Facebook, verificar que el panel diga:
+     "AUTOCITY PUBLISHER v3.4"
+  4. Hacer clic en "AUTOCOMPLETAR FORMULARIO".
+  5. En la consola de registros del panel se mostrara:
+     - Hora y nivel de cada paso (INFO, OK, WARN, ERROR)
+     - Progreso de descarga de cada imagen
+     - Resultado de cada campo completado
+
+------------------------------------------------------
+COMO VERIFICAR QUE SE CARGO LA VERSION CORRECTA
+------------------------------------------------------
+  Si el panel dice "Autocity Publisher v2.0" en el encabezado:
+    --> Version correcta cargada.
+
+  Si el panel tiene emojis o dice otra version:
+    --> Chrome sigue usando la version cacheada.
+    --> Repetir PASO 1 (eliminar) y PASO 2 (cargar de nuevo).
+
+------------------------------------------------------
+ARCHIVOS DE LA EXTENSION (4 archivos)
+------------------------------------------------------
+  manifest.json  - Configuracion de permisos y version
+  background.js  - Descarga imagenes sin restriccion CORS
+  content.js     - Panel UI + autocompletado del formulario
+  styles.css     - Estilos del panel flotante
