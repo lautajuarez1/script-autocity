@@ -45,14 +45,16 @@ const REQUEST_DELAY_MS = 500;
 // Dejar en null para procesar todas las sucursales.
 const SUCURSAL_FILTRO = 'Córdoba';
 
-// Priorización de los más caros: cantidad de vehículos con mayor precio a procesar
-// (cubre con holgura el cupo de 50 publicaciones activas + 30 candidatos de reemplazo).
-const TOP_AUTOS_MAS_CAROS = 80;
+// Cantidad maxima de fichas detalladas por ejecucion.
+// La cola persistente permite completar todo Cordoba en varias corridas de 6 horas.
+const AUTOS_POR_EJECUCION = 60;
+const CENSO_QUEUE_IDS_KEY = 'censo_queue_ids';
+const CENSO_QUEUE_OFFSET_KEY = 'censo_queue_offset';
 
 // Tipo de cambio referencial para rankear vehículos en USD contra ARS (ej: 1 USD = 1350 ARS)
 const USD_TO_ARS_RATE = 1350;
 
-const TEST_MODE = false; // false = procesa los TOP_AUTOS_MAS_CAROS (80 autos); true = sólo TEST_LIMIT autos
+const TEST_MODE = false; // false = procesa un lote; true = solo TEST_LIMIT autos
 const TEST_LIMIT = 5;
 
 const DEFAULT_HEADERS = {
@@ -166,16 +168,20 @@ function runCenso() {
       return getComparablePrice(b) - getComparablePrice(a);
     });
 
-    // Seleccionamos los N autos más caros (Top 80)
-    let productsToProcess = cordobaProducts;
-    if (TOP_AUTOS_MAS_CAROS && TOP_AUTOS_MAS_CAROS > 0) {
-      productsToProcess = cordobaProducts.slice(0, TOP_AUTOS_MAS_CAROS);
-      Logger.log('Priorizando los Top ' + productsToProcess.length + ' más caros para scraping de fichas.');
-    }
-
+    let productsToProcess;
+    let censoBatch = null;
     if (TEST_MODE) {
-      productsToProcess = productsToProcess.slice(0, TEST_LIMIT);
+      productsToProcess = cordobaProducts.slice(0, TEST_LIMIT);
       Logger.log('TEST_MODE activo: procesando sólo ' + productsToProcess.length + ' autos.');
+    } else {
+      censoBatch = createCensoBatch(cordobaProducts, existingMap);
+      productsToProcess = censoBatch.products;
+      if (censoBatch.priorityCount) {
+        Logger.log('Priorizando ' + censoBatch.priorityCount + ' autos nuevos.');
+      }
+      if (censoBatch.next > censoBatch.start) {
+        Logger.log('Lote ' + (censoBatch.start + 1) + '-' + censoBatch.next + ' de ' + censoBatch.total + ' autos de Cordoba.');
+      }
     }
 
     const seenIds = new Set();
@@ -207,6 +213,7 @@ function runCenso() {
     // Usamos allActiveIds para confirmar bajas reales de catálogo en Autocity.
     if (!TEST_MODE) {
       markDesaparecidos(sheet, existingMap, allActiveIds, summary);
+      commitCensoBatch(censoBatch);
     }
 
     logRunSummary(sheet.getParent(), summary);
@@ -954,4 +961,102 @@ function generarTodosLosCopys() {
 
   sheet.getRange(2, 1, lastRow - 1, TOTAL_COLUMNS).setValues(data);
   SpreadsheetApp.getActiveSpreadsheet().toast('Se generó el contenido de Marketplace para ' + actualizados + ' autos.', 'Generador Completado');
+}
+
+function createCensoBatch(products, existingMap) {
+  const properties = PropertiesService.getScriptProperties();
+  let queueIds = parseCensoQueue(properties.getProperty(CENSO_QUEUE_IDS_KEY));
+  let start = Number(properties.getProperty(CENSO_QUEUE_OFFSET_KEY) || 0);
+  if (!isFinite(start) || start < 0) start = 0;
+
+  if (!queueIds || start >= queueIds.length) {
+    queueIds = products.map(function (product) { return String(product.id); });
+    start = 0;
+  }
+
+  const priorityProducts = selectNewCensoProducts(products, existingMap, AUTOS_POR_EJECUCION);
+  const priorityIds = {};
+  priorityProducts.forEach(function (product) {
+    priorityIds[String(product.id)] = true;
+  });
+
+  const queueAfterPriority = removePriorityFromCensoQueue(queueIds, start, priorityIds);
+  const batch = selectCensoProducts(products, queueAfterPriority, start, AUTOS_POR_EJECUCION - priorityProducts.length);
+  return {
+    products: priorityProducts.concat(batch.products),
+    ids: queueAfterPriority,
+    start: start,
+    next: batch.next,
+    total: queueAfterPriority.length,
+    priorityCount: priorityProducts.length
+  };
+}
+
+function selectNewCensoProducts(products, existingMap, limit) {
+  return products.filter(function (product) {
+    return !existingMap[String(product.id)];
+  }).slice(0, limit);
+}
+
+function removePriorityFromCensoQueue(queueIds, start, priorityIds) {
+  return queueIds.slice(0, start).concat(queueIds.slice(start).filter(function (id) {
+    return !priorityIds[id];
+  }));
+}
+
+function selectCensoProducts(products, queueIds, start, limit) {
+  const productsById = {};
+  products.forEach(function (product) {
+    productsById[String(product.id)] = product;
+  });
+
+  const next = Math.min(start + limit, queueIds.length);
+  const productsInBatch = queueIds.slice(start, next)
+    .map(function (id) { return productsById[id]; })
+    .filter(Boolean);
+
+  return { products: productsInBatch, next: next };
+}
+
+function testSelectCensoProducts() {
+  const products = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const batch = selectCensoProducts(products, ['3', '2', '9'], 0, 2);
+  if (batch.next !== 2 || batch.products.length !== 2 || batch.products[0].id !== 3 || batch.products[1].id !== 2) {
+    throw new Error('selectCensoProducts no conserva la cola o el cursor.');
+  }
+
+  const newProducts = selectNewCensoProducts(products, { '2': 5 }, 2);
+  if (newProducts.length !== 2 || newProducts[0].id !== 1 || newProducts[1].id !== 3) {
+    throw new Error('selectNewCensoProducts no prioriza los autos nuevos.');
+  }
+
+  const queue = removePriorityFromCensoQueue(['1', '2', '3'], 1, { '2': true });
+  if (queue.length !== 2 || queue[0] !== '1' || queue[1] !== '3') {
+    throw new Error('removePriorityFromCensoQueue no evita repetir autos nuevos.');
+  }
+}
+
+function parseCensoQueue(rawQueue) {
+  if (!rawQueue) return null;
+  try {
+    const queueIds = JSON.parse(rawQueue);
+    return Array.isArray(queueIds) ? queueIds : null;
+  } catch (e) {
+    Logger.log('Cola de censo invalida; se reinicia.');
+    return null;
+  }
+}
+
+function commitCensoBatch(batch) {
+  const properties = PropertiesService.getScriptProperties();
+  if (batch.next >= batch.total) {
+    properties.deleteProperty(CENSO_QUEUE_IDS_KEY);
+    properties.deleteProperty(CENSO_QUEUE_OFFSET_KEY);
+    Logger.log('Carga completa de Cordoba finalizada.');
+    return;
+  }
+
+  properties.setProperty(CENSO_QUEUE_IDS_KEY, JSON.stringify(batch.ids));
+  properties.setProperty(CENSO_QUEUE_OFFSET_KEY, String(batch.next));
+  Logger.log('Proximo lote: ' + (batch.next + 1) + ' de ' + batch.total + '.');
 }
