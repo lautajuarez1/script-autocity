@@ -4,13 +4,13 @@
 
 Extensión Chrome Manifest V3 que recibe datos de un vehículo desde AppSheet/Google Sheets mediante la URL de Facebook Marketplace, completa el formulario vehicular, sube fotos desde el CDN de Asofix y deja el botón final de Publicar para acción manual.
 
-La extensión no debe publicar automáticamente. El panel indica `MODO SIMULACION` y debe dejar la publicación final a una persona.
+La extensión no publica automáticamente. La publicación final queda a cargo de una persona.
 
 ## Reglas de trabajo del usuario
 
 - Llamar al usuario `lautaro` al inicio de cada respuesta.
 - No usar acentos en comentarios de código ni dentro de código, salvo que sea imprescindible para representar texto real del formulario.
-- Cada cambio de la extensión debe aumentar la versión visible en Chrome, en el panel flotante, en el lanzador de prueba y en las instrucciones.
+- Cada cambio de la extensión debe aumentar la versión visible en Chrome, en el panel flotante y en las instrucciones.
 
 ## Directorio de trabajo
 
@@ -20,24 +20,25 @@ No hay un repositorio Git inicializado en este directorio.
 
 Archivos relevantes:
 
-- `extension_autocity\manifest.json`: configuración Manifest V3, versión actual 3.0.
+- `extension_autocity\manifest.json`: configuración Manifest V3, versión actual 3.6.
 - `extension_autocity\content.js`: panel y llenado del formulario. Es el archivo principal.
-- `extension_autocity\background.js`: descarga fotos del CDN sin el bloqueo CORS de la página de Facebook.
+- `extension_autocity\background.js`: descarga fotos y conserva temporalmente el vehículo durante el bounce.
+- `extension_autocity\bridge.js`: recibe el vehículo en GitHub Pages antes de abrir Facebook.
 - `extension_autocity\styles.css`: estilos del panel.
 - `extension_autocity\INSTRUCCIONES.txt`: instrucciones de instalación y versión visible.
-- `probar_extension.html`: lanzador local con un vehículo de prueba y URL con JSON codificado.
 - `CONTEXTO_AUTOCITY.md`: este documento.
 
 ## Arquitectura implementada
 
 Flujo actual:
 
-1. Google Sheet/AppSheet construye una URL de Facebook con datos en hash o query string.
-2. `content.js` obtiene datos desde `#autocity=<JSON>` o parámetros de URL.
-3. El usuario abre Marketplace, ve el panel Autocity y presiona `AUTOCOMPLETAR FORMULARIO`.
-4. La extensión selecciona Tipo de vehículo antes de cualquier otro dato dependiente.
-5. `background.js` descarga fotos desde `cdn.asofix.com`, las devuelve como base64 y `content.js` las inyecta en el `input[type=file]` usando `DataTransfer`.
-6. El script completa campos, pero no presiona Siguiente ni Publicar.
+1. Google Sheet/AppSheet abre GitHub Pages con datos en `#autocity=<JSON>`.
+2. `bridge.js` guarda el vehículo diez minutos en `chrome.storage.session` y abre Facebook sin datos en la URL.
+3. `content.js` recupera los datos cuando llega al formulario de vehículos.
+4. El usuario abre Marketplace, ve el panel Autocity y presiona `AUTOCOMPLETAR FORMULARIO`.
+5. La extensión selecciona Tipo de vehículo antes de cualquier otro dato dependiente.
+6. `background.js` descarga fotos desde `cdn.asofix.com`, las devuelve como base64 y `content.js` las inyecta en el `input[type=file]` usando `DataTransfer`.
+7. El script completa campos, pero no presiona Siguiente ni Publicar.
 
 ## Reglas de negocio confirmadas
 
@@ -52,17 +53,16 @@ Flujo actual:
 
 ## Versiones realizadas
 
-Se hicieron incrementos consecutivos de 2.4 a 3.0. La versión vigente es **3.0**.
+Se hicieron incrementos consecutivos de 2.4 a 3.8. La versión vigente es **3.8**.
 
 La versión se actualizó en:
 
 - `extension_autocity\manifest.json`
 - encabezado y bandera global de `content.js`
 - panel flotante de `content.js`
-- `probar_extension.html`
 - `extension_autocity\INSTRUCCIONES.txt`
 
-Al recargar en `chrome://extensions`, Chrome debe mostrar versión 3.0 y el panel debe decir `AUTOCITY PUBLISHER v3.0`.
+Al recargar en `chrome://extensions`, Chrome debe mostrar versión 3.8 y el panel debe decir `AUTOCITY PUBLISHER v3.8`.
 
 ## Evidencia obtenida del DOM real
 
@@ -143,7 +143,7 @@ Los logs mostraron:
 - Kilometraje no encontrado.
 - Precio no encontrado.
 
-La causa era que `findField()` podía devolver un contenedor o combobox padre al buscar textos como Marca o Modelo. `assignFieldValue()` entonces intentaba usarlo como dropdown y fallaba. No se debía a React ni al valor del inventario.
+La causa era que el flujo anterior podia devolver un contenedor o combobox padre al buscar textos como Marca o Modelo e intentaba escribirlo como si fuera un input. No se debia a React ni al valor del inventario.
 
 ### 3. Precio se localizaba por posición
 
@@ -153,7 +153,7 @@ Una versión intentaba encontrar Precio como el input posterior a Modelo. Eso de
 
 Al abrir un combobox y volver a la consola, el popup se cerraba. Se solucionó la investigación usando un `MutationObserver` que se arma primero y captura el `listbox` automáticamente al abrirse.
 
-## Implementación actual de content.js (v3.0)
+## Implementación actual de content.js (v3.7)
 
 ### Datos desde URL
 
@@ -164,7 +164,7 @@ Al abrir un combobox y volver a la consola, el popup se cerraba. Se solucionó l
 - Alias para kilometraje: `km`, `kilometraje`, `mileage`.
 - Alias para datos de vehiculo: `tipo_vehiculo`, `tipo`, `vehicle_type`, `carroceria`, `tipo_carroceria`, `body_style`, `estado`, `estado_vehiculo`, `condition`, `combustible`, `fuel`, `transmision`, `transmission`.
 
-El lanzador `probar_extension.html` usa JSON, por lo que sus claves pasan sin ser transformadas.
+El bounce acepta JSON o los parametros individuales construidos por AppSheet.
 
 ### Selección de comboboxes
 

@@ -1,7 +1,7 @@
 /**
- * Autocity Marketplace Publisher - Content Script v3.4
+ * Autocity Marketplace Publisher - Content Script v3.8
  *
- * Mejoras v3.4:
+ * Mejoras v3.8:
  * - Usa labels reales para Marca, Modelo, Millaje, Precio y Descripcion.
  * - Confirma comboboxes ARIA con listbox en portal y MutationObserver.
  * - Publica precio 1; el precio comercial vive en la descripcion.
@@ -10,8 +10,8 @@
 (function () {
   'use strict';
 
-  if (window.__autocity_v3_4) return;
-  window.__autocity_v3_4 = true;
+  if (window.__autocity_v3_8) return;
+  window.__autocity_v3_8 = true;
 
   // ============================================================
   // NORMALIZACION DE TEXTO
@@ -133,35 +133,25 @@
 
     panel.innerHTML =
       '<div class="acp-head">' +
-        '<span class="acp-brand">AUTOCITY PUBLISHER v3.4</span>' +
-        '<span class="acp-actions"><button class="acp-minimize" id="acp-minimize" type="button" aria-label="Minimizar" title="Minimizar">-</button><span class="acp-close" id="acp-close">X</span></span>' +
+        '<span class="acp-brand">AUTOCITY PUBLISHER v3.8</span>' +
+        '<button class="acp-close" id="acp-close" type="button" aria-label="Cerrar">X</button>' +
       '</div>' +
       '<div class="acp-body">' +
         (data
-          ? '<div class="acp-mock">MODO SIMULACION</div>' +
-            '<div class="acp-info">' +
+          ? '<div class="acp-info">' +
               '<div class="acp-title">' + title + '</div>' +
               '<div class="acp-meta">' + year + ' | ' + price + ' | ' + photos.length + ' fotos</div>' +
             '</div>' +
-            '<button class="acp-btn" id="acp-run">AUTOCOMPLETAR FORMULARIO</button>'
-          : '<div class="acp-warn">No se detectaron datos de vehiculo en la URL.</div>' +
-            '<div style="font-size:10px; color:#a1a1aa; margin-top:4px; word-break:break-all;">URL recibida:<br>' + (window.location.href || '') + '</div>'
+            '<button class="acp-btn" id="acp-run">COMPLETAR FORMULARIO</button>'
+          : '<div class="acp-warn">No hay datos pendientes. Abrilo desde AppSheet.</div>'
         ) +
-        '<div class="acp-logheader">Registro de actividad <span class="acp-clear" id="acp-clear">limpiar</span></div>' +
-        '<div class="acp-logbox" id="acp-log">' +
-          '<div class="acp-line acp-info">' + timestamp() + ' [INFO] Extension v3.4 lista.</div>' +
-        '</div>' +
+        '<div class="acp-logheader">Resultados <span class="acp-clear" id="acp-clear">limpiar</span></div>' +
+        '<div class="acp-logbox" id="acp-log"></div>' +
       '</div>';
 
     document.body.appendChild(panel);
 
     panel.querySelector('#acp-close').onclick = function () { panel.remove(); };
-    panel.querySelector('#acp-minimize').onclick = function () {
-      var minimized = panel.classList.toggle('acp-minimized');
-      this.textContent = minimized ? '+' : '-';
-      this.setAttribute('aria-label', minimized ? 'Restaurar' : 'Minimizar');
-      this.title = minimized ? 'Restaurar' : 'Minimizar';
-    };
     panel.querySelector('#acp-clear').onclick = function () {
       panel.querySelector('#acp-log').innerHTML = '';
     };
@@ -215,12 +205,12 @@
       var strVal = String(value);
       var execOk = false;
 
-      // Método 1: Simulación de tipeo real vía execCommand (100% compatible con inputs formateados de Facebook)
+      // Method 1: native input insertion
       try {
         execOk = document.execCommand('insertText', false, strVal);
       } catch (ex) {}
 
-      // Método 2: Si execCommand no cambió el valor o no está disponible
+      // Method 2: native value setter fallback
       if (!execOk || el.value !== strVal) {
         var proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
         var setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
@@ -246,53 +236,6 @@
       console.warn('[Autocity] setInput error:', e);
       return false;
     }
-  }
-
-  // Asignar tanto a inputs tradicionales como a comboboxes / dropdowns de Facebook
-  async function assignFieldValue(el, value) {
-    if (!el) return false;
-
-    // 1. Si es input o textarea directo
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-      return await setInput(el, String(value));
-    }
-
-    // 2. Si es select estandar
-    if (el.tagName === 'SELECT') {
-      el.value = String(value);
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      return true;
-    }
-
-    // 3. Si tiene un input dentro
-    var innerInput = el.querySelector('input');
-    if (innerInput) {
-      return await setInput(innerInput, String(value));
-    }
-
-    // 4. Si es un combobox/boton interactivo de React
-    try {
-      el.focus();
-      el.click();
-      await new Promise(function (r) { setTimeout(r, 350); });
-
-      // Buscar opcion en el menu flotante que se abrio
-      var options = document.querySelectorAll('[role="option"], [role="listbox"] div, [role="menu"] div, li');
-      var valNorm = norm(String(value));
-
-      for (var i = 0; i < options.length; i++) {
-        var opt = options[i];
-        var optText = norm(opt.innerText);
-        if (optText === valNorm || optText.indexOf(valNorm) === 0) {
-          opt.click();
-          return true;
-        }
-      }
-    } catch (e) {
-      console.warn('[Autocity] Error en assignFieldValue combobox:', e);
-    }
-
-    return false;
   }
 
   function isVisible(el) {
@@ -417,18 +360,6 @@
     return value;
   }
 
-  function logVisibleControls() {
-    var controls = document.querySelectorAll('[role="combobox"], [role="option"], [role="checkbox"]');
-    var lines = [];
-    for (var i = 0; i < controls.length && lines.length < 12; i++) {
-      var control = controls[i];
-      if (!isVisible(control)) continue;
-      var text = (control.getAttribute('aria-label') || control.textContent || '').replace(/\s+/g, ' ').trim();
-      lines.push(control.getAttribute('role') + ': ' + text);
-    }
-    log('warn', 'Controles visibles: ' + (lines.length ? lines.join(' | ') : 'ninguno'));
-  }
-
   async function selectChoice(tokens, value, useFirstChoice) {
     var field = findChoiceField(tokens);
     if (!field && useFirstChoice) {
@@ -441,7 +372,6 @@
       }
     }
     if (!field || !value) {
-      logVisibleControls();
       return false;
     }
 
@@ -461,7 +391,6 @@
       }
     }
 
-    logVisibleControls();
     return false;
   }
 
@@ -471,7 +400,6 @@
     }, 1800);
     var checkbox = field && (field.matches('input[type="checkbox"], [role="checkbox"]') ? field : field.querySelector('input[type="checkbox"], [role="checkbox"]'));
     if (!checkbox) {
-      logVisibleControls();
       return false;
     }
     if (checkbox.checked || checkbox.getAttribute('aria-checked') === 'true') return true;
@@ -592,12 +520,9 @@
   // ============================================================
   async function run(data, photos) {
     var btn = document.getElementById('acp-run');
-    if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
-
-    log('info', 'Iniciando autocompletado.');
+    if (btn) { btn.disabled = true; btn.textContent = 'COMPLETANDO...'; }
 
     var vehicleType = data.tipo_vehiculo || data.tipo || 'Auto/camioneta';
-    log('info', 'Seleccionando tipo de vehiculo...');
     if (await selectChoice(['tipo de vehiculo', 'tipo', 'vehicle type'], vehicleType, true)) {
       log('ok', 'Tipo de vehiculo = ' + vehicleType);
     } else {
@@ -605,30 +530,26 @@
       if (btn) { btn.disabled = false; btn.textContent = 'RE-INTENTAR TIPO DE VEHICULO'; }
       return;
     }
-    var dependentField = await waitForElement(function () {
+    await waitForElement(function () {
       return findField(['carroceria', 'estado del vehiculo', 'kilometr', 'tipo de combustible', 'transmision', 'titulo limpio']);
     }, 1800);
-    if (!dependentField) log('warn', 'No aparecieron campos dependientes luego de seleccionar el tipo de vehiculo.');
 
     if (await setCleanTitle()) {
       log('ok', 'Titulo limpio = si');
     } else {
-      log('info', 'Checkbox de titulo limpio no encontrado.');
+      log('warn', 'Titulo limpio: no encontrado.');
     }
 
     // --- 1. FOTOS ---
     if (photos.length > 0) {
-      log('info', 'Enviando ' + photos.length + ' URLs al background worker para descarga...');
       try {
         var results = await downloadAllImages(photos);
-        log('info', 'Background worker respondio. Procesando resultados...');
 
         var files = [];
         for (var i = 0; i < results.length; i++) {
           var r = results[i];
           if (r.success) {
             files.push(base64ToFile(r.base64, 'foto_' + (i + 1) + '.jpg'));
-            log('ok', 'Imagen ' + (i + 1) + ': ' + r.size + ' bytes descargados.');
           } else {
             log('warn', 'Imagen ' + (i + 1) + ': fallo - ' + r.error);
           }
@@ -651,7 +572,7 @@
             fileInput.files = dt.files;
             fileInput.dispatchEvent(new Event('change', { bubbles: true }));
             fileInput.dispatchEvent(new Event('input', { bubbles: true }));
-            log('ok', files.length + ' imagenes inyectadas en el cargador de Facebook.');
+            log('ok', 'Fotos = ' + files.length + '/' + photos.length);
           } else {
             log('warn', 'No se encontro input de archivos en la pagina.');
           }
@@ -659,20 +580,17 @@
       } catch (err) {
         log('error', 'Error en descarga de imagenes: ' + err.message);
       }
-    } else {
-      log('info', 'No hay fotos para procesar.');
     }
 
     await new Promise(function (r) { setTimeout(r, 600); });
 
     // --- 2. CAMPOS DE TEXTO Y DROPDOWNS ---
-    log('info', 'Completando campos de formulario...');
 
     var fields = [
       {
         name: 'Año',
         key: 'año',
-        tokens: ['ano', 'year'], // NFD norm('año') = 'ano'
+        tokens: ['ano', 'year'], // Normalized year label
         format: null,
         choice: true
       },
@@ -691,7 +609,7 @@
       {
         name: 'Kilometraje',
         key: 'km',
-        tokens: ['kilometr', 'millaje', 'odometr', 'cuentakilometr', 'mileage', 'km'], // Cubre kilometros, kilometraje, millaje, etc.
+        tokens: ['kilometr', 'millaje', 'odometr', 'cuentakilometr', 'mileage', 'km'], // Supported mileage labels
         format: function (v) { return Number(v).toLocaleString('es-AR') + ' km'; }
       }
     ];
@@ -700,7 +618,7 @@
       var f = fields[idx];
       var val = data[f.key] || data[f.key.replace('año', 'anio')];
       if (!val) {
-        log('info', f.name + ': sin dato recibido.');
+        log('warn', f.name + ': sin dato recibido.');
         continue;
       }
 
@@ -730,10 +648,8 @@
     }
 
     var price = '1';
-    log('info', 'Buscando campo Precio por su label...');
     var pInp = findNativeField(['precio', 'price']);
     if (pInp) {
-      log('info', 'Precio localizado. Placeholder: "' + (pInp.getAttribute('placeholder') || '') + '" AriaLabel: "' + (pInp.getAttribute('aria-label') || '') + '"');
       var pOk = await setPriceValue(pInp, price);
       if (pOk) {
         log('ok', 'Precio = $1');
@@ -777,21 +693,45 @@
       }
     }
 
-    log('ok', 'Autocompletado finalizado.');
-    log('warn', 'MODO SIMULACION: No presione Publicar.');
+    var problems = document.querySelectorAll('#acp-log .acp-warn, #acp-log .acp-error').length;
+    log(problems ? 'warn' : 'ok', problems ? 'Completado con ' + problems + ' avisos.' : 'Formulario completado sin avisos.');
 
-    if (btn) { btn.disabled = false; btn.textContent = 'RE-APLICAR FORMULARIO'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'COMPLETAR NUEVAMENTE'; }
   }
 
   // ============================================================
   // INICIALIZACION
   // ============================================================
-  var data = parseHash();
-  buildUI(data);
+  function isVehicleCreationPage() {
+    return /^\/marketplace\/create\/vehicle\/?$/.test(window.location.pathname);
+  }
 
-  window.addEventListener('hashchange', function () {
-    window.__autocity_v3_4 = false;
-    data = parseHash();
+  function takePendingVehicle() {
+    return new Promise(function (resolve) {
+      chrome.runtime.sendMessage({ action: 'takePendingVehicle' }, function (response) {
+        if (chrome.runtime.lastError || !response || !response.success) return resolve(null);
+        resolve(response.payload || null);
+      });
+    });
+  }
+
+  async function loadData() {
+    var directData = parseHash();
+    if (directData || !isVehicleCreationPage()) return directData;
+    return takePendingVehicle();
+  }
+
+  var data = null;
+
+  async function initialize() {
+    data = await loadData();
+    buildUI(data);
+  }
+
+  initialize();
+
+  window.addEventListener('hashchange', async function () {
+    data = await loadData();
     buildUI(data);
   });
 

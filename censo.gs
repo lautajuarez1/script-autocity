@@ -122,7 +122,7 @@ const TOTAL_COLUMNS = Object.keys(COLS).length; // 32
 
 // ====== CONFIGURACIÓN DE COPYWRITING & PROPUESTA COMERCIAL ======
 const COPY_CONFIG = {
-  telefono_whatsapp: '351 XXXXXXX', // Número de WhatsApp visible para los compradores
+  telefono_whatsapp: '3513764403', // Numero de WhatsApp visible para los compradores
   credito_propio: 'Crédito propio de $12.000.000 en 12 cuotas fijas sin interés',
   financiacion_bancos: 'Financiamos hasta el 100% a través de bancos',
   permuta: 'Recibimos vehículos con sistema llave por llave',

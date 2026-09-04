@@ -1,14 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Autocity Marketplace Publisher",
-  "version": "3.4",
+  "version": "3.8",
   "description": "Autocompleta vehiculos y fotos desde AppSheet en Facebook Marketplace",
-  "permissions": [
-    "activeTab",
-    "scripting"
-  ],
+  "permissions": ["storage"],
   "host_permissions": [
-    "*://*.facebook.com/*",
     "*://*.asofix.com/*"
   ],
   "background": {
@@ -21,6 +17,13 @@
       ],
       "js": ["content.js"],
       "css": ["styles.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://lautajuarez1.github.io/autocity-bounce/*"
+      ],
+      "js": ["bridge.js"],
       "run_at": "document_idle"
     }
   ]

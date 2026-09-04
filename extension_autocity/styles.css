@@ -1,13 +1,12 @@
-/* Autocity Publisher v3.4 - Styles */
+/* Autocity Publisher v3.8 - Styles */
 
 #acp-panel {
   position: fixed;
   bottom: 16px;
   right: 16px;
-  width: 380px;
-  height: 440px;
+  width: 360px;
   min-width: 280px;
-  min-height: 120px;
+  min-height: 0;
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 32px);
   background: #18181b;
@@ -20,19 +19,7 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  overflow: auto;
-  resize: both;
-}
-
-#acp-panel.acp-minimized {
-  height: auto !important;
-  min-height: 0;
-  resize: none;
   overflow: hidden;
-}
-
-#acp-panel.acp-minimized .acp-body {
-  display: none;
 }
 
 .acp-head {
@@ -53,27 +40,12 @@
 }
 
 .acp-close {
-  cursor: pointer;
-  color: #71717a;
-  font-weight: bold;
-  padding: 2px 6px;
-}
-.acp-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.acp-minimize {
-  border: 0;
   background: transparent;
-  color: #71717a;
+  border: 0;
   cursor: pointer;
-  font: inherit;
+  color: #71717a;
   font-weight: bold;
   padding: 2px 6px;
-}
-.acp-minimize:hover {
-  color: #fff;
 }
 .acp-close:hover {
   color: #fff;
@@ -87,17 +59,6 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-}
-
-.acp-mock {
-  background: #0c4a6e;
-  color: #bae6fd;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  padding: 3px 8px;
-  border-radius: 3px;
-  align-self: flex-start;
 }
 
 .acp-info {
